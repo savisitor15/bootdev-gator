@@ -23,16 +23,17 @@ func main() {
 	cmds, err := app.InitializeCommands()
 	if err != nil {
 		fmt.Println(err)
-		return
+		os.Exit(1)
 	}
 	cmd, err := buildCommand()
 	if err != nil {
 		fmt.Println(err)
-		return
+		os.Exit(1)
 	}
 	err = cmds.Run(&state, cmd)
 	if err != nil {
 		fmt.Println(err)
-		return
+		os.Exit(1)
 	}
+	os.Exit(0)
 }
