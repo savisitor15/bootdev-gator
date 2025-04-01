@@ -1,20 +1,38 @@
 package main
 
 import (
-	config "github.com/savisitor15/bootdev-gator/internal/config"
 	"fmt"
+	"os"
+
+	app "github.com/savisitor15/bootdev-gator/internal/app"
 )
 
-func main(){
-	var cfg config.Config
-	cfg, err := config.Read()
+func buildCommand() (app.Command, error) {
+	if len(os.Args[1]) == 0 {
+		return app.Command{}, fmt.Errorf("unkown action")
+	}
+	return app.Command{Name: os.Args[1], Arguments: os.Args[2:len(os.Args)]}, nil
+}
+
+func main() {
+	state, err := app.InitializeState()
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
-	cfg.SetUser("lane")
-	cfg, err = config.Read()
+	cmds, err := app.InitializeCommands()
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
-	fmt.Println(cfg)
+	cmd, err := buildCommand()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	err = cmds.Run(&state, cmd)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }

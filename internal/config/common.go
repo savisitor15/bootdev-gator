@@ -1,15 +1,15 @@
 package config
 
 import (
-	"fmt"
-	"os"
-	"io"
 	"encoding/json"
+	"fmt"
+	"io"
+	"os"
 )
 
-const configName = ".gatorconfig.json";
+const configName = ".gatorconfig.json"
 
-func getConfigFilePath() (string, error){
+func getConfigFilePath() (string, error) {
 	pth, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("error getting user home path! err:\n %w", err)
@@ -18,23 +18,23 @@ func getConfigFilePath() (string, error){
 	return pth, nil
 }
 
-func backup(sourceFile string, destinationFile string) error{
-		source, err := os.Open(sourceFile)  //open the source file 
-		if err != nil {
-		   return err
-		}
-		defer source.Close()
-	 
-		destination, err := os.Create(destinationFile)  //create the destination file
-		if err != nil {
-		   return err
-		}
-		defer destination.Close()
-		_, err = io.Copy(destination, source)  //copy the contents of source to destination file
-		if err != nil {
-		   return err
-		}
-		return nil
+func backup(sourceFile string, destinationFile string) error {
+	source, err := os.Open(sourceFile) //open the source file
+	if err != nil {
+		return err
+	}
+	defer source.Close()
+
+	destination, err := os.Create(destinationFile) //create the destination file
+	if err != nil {
+		return err
+	}
+	defer destination.Close()
+	_, err = io.Copy(destination, source) //copy the contents of source to destination file
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func write(cfg Config) error {
@@ -47,22 +47,25 @@ func write(cfg Config) error {
 		return fmt.Errorf("unable to marshal cfg:\n %w", err)
 	}
 	// backup the file
-	err = backup(pth, pth + ".bak")
-	if err != nil{
+	err = backup(pth, pth+".bak")
+	if err != nil {
 		return fmt.Errorf("error taking snapshot of cfg:\n %w", err)
 	}
 	err = os.WriteFile(pth, rawJson, 0644)
 	if err != nil {
 		return fmt.Errorf("error writing back cfg:\n %w", err)
 	}
-	os.Remove(pth + ".bak") // we don't need the backup anymore
+	// we don't need the backup anymore
+	if os.Remove(pth+".bak") != nil {
+		return fmt.Errorf("saving succeeded but unable to clean up back-up")
+	}
 	return nil
 }
 
-func Read()(Config, error){
+func Read() (Config, error) {
 	var outConfig Config
 	pth, err := getConfigFilePath()
-	if err != nil{
+	if err != nil {
 		return outConfig, err
 	}
 	jsonByte, err := os.ReadFile(pth)
