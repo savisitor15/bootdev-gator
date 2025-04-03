@@ -4,10 +4,15 @@ import (
 	"fmt"
 	"os"
 
+	_ "github.com/lib/pq"
+
 	app "github.com/savisitor15/bootdev-gator/internal/app"
 )
 
 func buildCommand() (app.Command, error) {
+	if len(os.Args) < 2 {
+		return app.Command{}, fmt.Errorf("no command given")
+	}
 	if len(os.Args[1]) == 0 {
 		return app.Command{}, fmt.Errorf("unkown action")
 	}
@@ -15,12 +20,7 @@ func buildCommand() (app.Command, error) {
 }
 
 func main() {
-	state, err := app.InitializeState()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	cmds, err := app.InitializeCommands()
+	state, cmds, err := app.InitializeApp()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
