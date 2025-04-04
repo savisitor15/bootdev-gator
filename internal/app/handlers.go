@@ -79,9 +79,8 @@ func resetHandler(s *state, _ Command) error {
 }
 
 func aggHandler(s *state, _ Command) error {
-	var feedUrl string = "https://www.wagslane.dev/index.xml"
 	var ctx context.Context = context.Background()
-	res, err := fetchFeed(ctx, feedUrl)
+	res, err := fetchFeed(ctx, s.appConfig.FeedUrl)
 	if err != nil {
 		return err
 	}

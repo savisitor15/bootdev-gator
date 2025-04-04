@@ -55,7 +55,7 @@ func cleanFeedOutput(inFeed *RSSFeed) error {
 	inFeed.Channel.Title = html.UnescapeString(inFeed.Channel.Title)
 	inFeed.Channel.Description = html.UnescapeString(inFeed.Channel.Description)
 	// clean the items
-	for id, _ := range inFeed.Channel.Item {
+	for id := range inFeed.Channel.Item {
 		inFeed.Channel.Item[id].Title = html.UnescapeString(inFeed.Channel.Item[id].Title)
 		inFeed.Channel.Item[id].Description = html.UnescapeString(inFeed.Channel.Item[id].Description)
 	}
