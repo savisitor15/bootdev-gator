@@ -51,7 +51,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 const getUserByName = `-- name: GetUserByName :one
 SELECT id, name 
 FROM users
-WHERE name LIKE $1
+WHERE name = $1
 `
 
 type GetUserByNameRow struct {
@@ -64,6 +64,40 @@ func (q *Queries) GetUserByName(ctx context.Context, name sql.NullString) (GetUs
 	var i GetUserByNameRow
 	err := row.Scan(&i.ID, &i.Name)
 	return i, err
+}
+
+const getUsers = `-- name: GetUsers :many
+SELECT id, name
+FROM users
+WHERE name <> '_g_invalid'
+`
+
+type GetUsersRow struct {
+	ID   uuid.UUID
+	Name sql.NullString
+}
+
+func (q *Queries) GetUsers(ctx context.Context) ([]GetUsersRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUsersRow
+	for rows.Next() {
+		var i GetUsersRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const resetUsers = `-- name: ResetUsers :exec

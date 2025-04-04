@@ -53,6 +53,7 @@ func initializeCommands() (commands, error) {
 	cmds.register("login", loginHandler)
 	cmds.register("register", registerHandler)
 	cmds.register("reset", resetHandler)
+	cmds.register("users", usersHandler)
 	return cmds, nil
 }
 

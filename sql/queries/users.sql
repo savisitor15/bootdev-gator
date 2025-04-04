@@ -8,10 +8,15 @@ VALUES (
 )
 RETURNING *;
 
+-- name: GetUsers :many
+SELECT id, name
+FROM users
+WHERE name <> '_g_invalid';
+
 -- name: GetUserByName :one
 SELECT id, name 
 FROM users
-WHERE name LIKE $1;
+WHERE name = $1;
 
 -- name: ResetUsers :exec
 DELETE FROM users

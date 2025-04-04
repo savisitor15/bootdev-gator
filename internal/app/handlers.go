@@ -52,6 +52,23 @@ func registerHandler(s *state, cmd Command) error {
 
 }
 
+func usersHandler(s *state, _ Command) error {
+	ctx := context.Background()
+	users, err := s.db.GetUsers(ctx)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Users:")
+	fmt.Println("----------")
+	for _, elm := range users {
+		if elm.Name.String == s.appConfig.CurrentUserName {
+			elm.Name.String = elm.Name.String + " (current)"
+		}
+		fmt.Println(elm.Name.String)
+	}
+	return nil
+}
+
 func resetHandler(s *state, _ Command) error {
 	ctx := context.Background()
 	err := s.db.ResetUsers(ctx)
