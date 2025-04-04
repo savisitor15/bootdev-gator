@@ -77,3 +77,22 @@ func resetHandler(s *state, _ Command) error {
 	}
 	return nil
 }
+
+func aggHandler(s *state, _ Command) error {
+	var feedUrl string = "https://www.wagslane.dev/index.xml"
+	var ctx context.Context = context.Background()
+	res, err := fetchFeed(ctx, feedUrl)
+	if err != nil {
+		return err
+	}
+	cleanFeedOutput(res)
+	fmt.Println("channel:", res.Channel.Title)
+	fmt.Println(res.Channel.Description)
+	fmt.Println("items:")
+	for _, itm := range res.Channel.Item {
+		fmt.Println("title:", itm.Title)
+		fmt.Println(itm.Description)
+	}
+
+	return nil
+}
