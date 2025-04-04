@@ -51,3 +51,12 @@ func registerHandler(s *state, cmd Command) error {
 	return loginHandler(s, Command{Name: "login", Arguments: cmd.Arguments})
 
 }
+
+func resetHandler(s *state, _ Command) error {
+	ctx := context.Background()
+	err := s.db.ResetUsers(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}

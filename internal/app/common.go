@@ -52,6 +52,7 @@ func initializeCommands() (commands, error) {
 	cmds := commands{}
 	cmds.register("login", loginHandler)
 	cmds.register("register", registerHandler)
+	cmds.register("reset", resetHandler)
 	return cmds, nil
 }
 

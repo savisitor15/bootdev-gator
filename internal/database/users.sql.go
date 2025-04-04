@@ -65,3 +65,13 @@ func (q *Queries) GetUserByName(ctx context.Context, name sql.NullString) (GetUs
 	err := row.Scan(&i.ID, &i.Name)
 	return i, err
 }
+
+const resetUsers = `-- name: ResetUsers :exec
+DELETE FROM users
+WHERE name <> '_g_invalid'
+`
+
+func (q *Queries) ResetUsers(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, resetUsers)
+	return err
+}

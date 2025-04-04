@@ -12,3 +12,7 @@ RETURNING *;
 SELECT id, name 
 FROM users
 WHERE name LIKE $1;
+
+-- name: ResetUsers :exec
+DELETE FROM users
+WHERE name <> '_g_invalid';
