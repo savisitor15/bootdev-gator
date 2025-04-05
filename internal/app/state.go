@@ -8,4 +8,5 @@ import (
 type state struct {
 	db        *database.Queries
 	appConfig *config.Config
+	currentUser *database.GetUserByNameRow
 }

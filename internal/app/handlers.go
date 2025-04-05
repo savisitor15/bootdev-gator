@@ -95,3 +95,23 @@ func aggHandler(s *state, _ Command) error {
 
 	return nil
 }
+
+func addfeedHandler(s *state, cmd Command) error {
+	var ctx context.Context = context.Background()
+	if len(cmd.Arguments) < 2 {
+		return fmt.Errorf("not enough arguments")
+	}
+	ts := time.Now()
+	name := cmd.Arguments[0]
+	url := cmd.Arguments[1]
+	params := database.CreateFeedParams{
+		ID:        uuid.New(),
+		Name:      sql.NullString{String: name, Valid: true},
+		Url:       sql.NullString{String: url, Valid: true},
+		UserID:    uuid.NullUUID{UUID: s.currentUser.ID, Valid: true},
+		CreatedAt: ts,
+		UpdatedAt: ts,
+	}
+	_, err := s.db.CreateFeed(ctx, params)
+	return err
+}
