@@ -115,3 +115,16 @@ func addfeedHandler(s *state, cmd Command) error {
 	_, err := s.db.CreateFeed(ctx, params)
 	return err
 }
+
+func feedsHandler(s *state, _ Command) error {
+	ctx := context.Background()
+	output, err := s.db.GetFeeds(ctx)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Feed | URL | UserName")
+	for _, elm := range output {
+		fmt.Println(elm.Name.String, "|", elm.Url.String, "|", elm.Username.String)
+	}
+	return nil
+}

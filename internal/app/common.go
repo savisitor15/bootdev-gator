@@ -25,7 +25,7 @@ func initDefaultUser(s *state) {
 		}
 		s.db.CreateUser(ctx, params)
 	}
-	_, err = s.db.GetFeedByUser(ctx, uuid.NullUUID{UUID: user.ID, Valid: true})
+	_, err = s.db.GetFeedsByUser(ctx, uuid.NullUUID{UUID: user.ID, Valid: true})
 	if err != nil {
 		params := database.CreateFeedParams{
 			Name:      sql.NullString{String: "_g_invalid", Valid: true},
@@ -72,6 +72,7 @@ func initializeCommands() (commands, error) {
 	cmds.register("users", usersHandler)
 	cmds.register("agg", aggHandler)
 	cmds.register("addfeed", addfeedHandler)
+	cmds.register("feeds", feedsHandler)
 	return cmds, nil
 }
 

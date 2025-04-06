@@ -56,42 +56,19 @@ func (q *Queries) CreateFeed(ctx context.Context, arg CreateFeedParams) (Feed, e
 	return i, err
 }
 
-const getFeedByUser = `-- name: GetFeedByUser :one
-SELECT id, name, url, user_id
-FROM feeds
-WHERE user_id = $1
-`
-
-type GetFeedByUserRow struct {
-	ID     uuid.UUID
-	Name   sql.NullString
-	Url    sql.NullString
-	UserID uuid.NullUUID
-}
-
-func (q *Queries) GetFeedByUser(ctx context.Context, userID uuid.NullUUID) (GetFeedByUserRow, error) {
-	row := q.db.QueryRowContext(ctx, getFeedByUser, userID)
-	var i GetFeedByUserRow
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Url,
-		&i.UserID,
-	)
-	return i, err
-}
-
 const getFeeds = `-- name: GetFeeds :many
-SELECT id, name, url, user_id
+SELECT feeds.id, feeds.name, feeds.url, users.name as username
 FROM feeds
-WHERE name <> '_g_invalid'
+JOIN users
+ON users.id = feeds.user_id
+WHERE feeds.name <> '_g_invalid'
 `
 
 type GetFeedsRow struct {
-	ID     uuid.UUID
-	Name   sql.NullString
-	Url    sql.NullString
-	UserID uuid.NullUUID
+	ID       uuid.UUID
+	Name     sql.NullString
+	Url      sql.NullString
+	Username sql.NullString
 }
 
 func (q *Queries) GetFeeds(ctx context.Context) ([]GetFeedsRow, error) {
@@ -103,6 +80,47 @@ func (q *Queries) GetFeeds(ctx context.Context) ([]GetFeedsRow, error) {
 	var items []GetFeedsRow
 	for rows.Next() {
 		var i GetFeedsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Url,
+			&i.Username,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getFeedsByUser = `-- name: GetFeedsByUser :many
+SELECT id, name, url, user_id
+FROM feeds
+WHERE user_id = $1
+`
+
+type GetFeedsByUserRow struct {
+	ID     uuid.UUID
+	Name   sql.NullString
+	Url    sql.NullString
+	UserID uuid.NullUUID
+}
+
+func (q *Queries) GetFeedsByUser(ctx context.Context, userID uuid.NullUUID) ([]GetFeedsByUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getFeedsByUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetFeedsByUserRow
+	for rows.Next() {
+		var i GetFeedsByUserRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
