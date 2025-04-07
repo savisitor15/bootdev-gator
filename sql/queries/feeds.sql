@@ -22,5 +22,10 @@ SELECT id, name, url, user_id
 FROM feeds
 WHERE user_id = $1;
 
+-- name: GetFeedsByUrl :one
+SELECT id, name, url, user_id
+FROM feeds
+WHERE url = $1;
+
 -- name: ResetFeeds :exec
 DELETE FROM feeds;

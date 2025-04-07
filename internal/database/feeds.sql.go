@@ -99,6 +99,31 @@ func (q *Queries) GetFeeds(ctx context.Context) ([]GetFeedsRow, error) {
 	return items, nil
 }
 
+const getFeedsByUrl = `-- name: GetFeedsByUrl :one
+SELECT id, name, url, user_id
+FROM feeds
+WHERE url = $1
+`
+
+type GetFeedsByUrlRow struct {
+	ID     uuid.UUID
+	Name   sql.NullString
+	Url    sql.NullString
+	UserID uuid.NullUUID
+}
+
+func (q *Queries) GetFeedsByUrl(ctx context.Context, url sql.NullString) (GetFeedsByUrlRow, error) {
+	row := q.db.QueryRowContext(ctx, getFeedsByUrl, url)
+	var i GetFeedsByUrlRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Url,
+		&i.UserID,
+	)
+	return i, err
+}
+
 const getFeedsByUser = `-- name: GetFeedsByUser :many
 SELECT id, name, url, user_id
 FROM feeds

@@ -73,6 +73,8 @@ func initializeCommands() (commands, error) {
 	cmds.register("agg", aggHandler)
 	cmds.register("addfeed", addfeedHandler)
 	cmds.register("feeds", feedsHandler)
+	cmds.register("follow", followHandler)
+	cmds.register("following", followingHandler)
 	return cmds, nil
 }
 

@@ -112,8 +112,11 @@ func addfeedHandler(s *state, cmd Command) error {
 		CreatedAt: ts,
 		UpdatedAt: ts,
 	}
-	_, err := s.db.CreateFeed(ctx, params)
-	return err
+	feed, err := s.db.CreateFeed(ctx, params)
+	if err != nil {
+		return err
+	}
+	return followHandler(s, Command{Name: "follow", Arguments: []string{feed.Url.String}})
 }
 
 func feedsHandler(s *state, _ Command) error {
@@ -125,6 +128,47 @@ func feedsHandler(s *state, _ Command) error {
 	fmt.Println("Feed | URL | UserName")
 	for _, elm := range output {
 		fmt.Println(elm.Name.String, "|", elm.Url.String, "|", elm.Username.String)
+	}
+	return nil
+}
+
+func followHandler(s *state, cmd Command) error {
+	ctx := context.Background()
+
+	if len(cmd.Arguments) < 1 {
+		return fmt.Errorf("missing url for follow")
+	}
+	url := cmd.Arguments[0]
+	feed, err := s.db.GetFeedsByUrl(ctx, sql.NullString{String: url, Valid: true})
+	if err != nil {
+		return err
+	}
+	ts := time.Now()
+	params := database.CreateFeedFollowParams{
+		CreatedAt: ts,
+		UpdatedAt: ts,
+		UserID:    uuid.NullUUID{UUID: s.currentUser.ID, Valid: true},
+		FeedID:    uuid.NullUUID{UUID: feed.ID, Valid: true},
+	}
+	follow, err := s.db.CreateFeedFollow(ctx, params)
+	if err != nil {
+		return err
+	}
+	fmt.Println("new follow registered for", s.appConfig.CurrentUserName, "on feed", follow.FeedName.String)
+	return nil
+}
+
+func followingHandler(s *state, _ Command) error {
+	ctx := context.Background()
+	follows, err := s.db.GetFeedFollowsForUser(ctx, s.currentUser.ID)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Follows for user:", s.currentUser.Name.String)
+	fmt.Println("User has", len(follows), "subscribed feeds")
+	fmt.Println("ID", "|", "feed", "|", "created at")
+	for _, elm := range follows {
+		fmt.Println(elm.ID, "|", elm.FeedName, "|", elm.CreatedAt)
 	}
 	return nil
 }
