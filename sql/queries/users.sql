@@ -13,6 +13,11 @@ SELECT id, name
 FROM users
 WHERE name <> '_g_invalid';
 
+-- name: GetUser :one
+SELECT *
+FROM users
+WHERE name = $1;
+
 -- name: GetUserByName :one
 SELECT id, name 
 FROM users

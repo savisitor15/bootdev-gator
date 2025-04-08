@@ -96,7 +96,7 @@ func aggHandler(s *state, _ Command) error {
 	return nil
 }
 
-func addfeedHandler(s *state, cmd Command) error {
+func addfeedHandler(s *state, cmd Command, user database.User) error {
 	var ctx context.Context = context.Background()
 	if len(cmd.Arguments) < 2 {
 		return fmt.Errorf("not enough arguments")
@@ -108,7 +108,7 @@ func addfeedHandler(s *state, cmd Command) error {
 		ID:        uuid.New(),
 		Name:      sql.NullString{String: name, Valid: true},
 		Url:       sql.NullString{String: url, Valid: true},
-		UserID:    uuid.NullUUID{UUID: s.currentUser.ID, Valid: true},
+		UserID:    uuid.NullUUID{UUID: user.ID, Valid: true},
 		CreatedAt: ts,
 		UpdatedAt: ts,
 	}
@@ -116,7 +116,7 @@ func addfeedHandler(s *state, cmd Command) error {
 	if err != nil {
 		return err
 	}
-	return followHandler(s, Command{Name: "follow", Arguments: []string{feed.Url.String}})
+	return followHandler(s, Command{Name: "follow", Arguments: []string{feed.Url.String}}, user)
 }
 
 func feedsHandler(s *state, _ Command) error {
@@ -132,7 +132,7 @@ func feedsHandler(s *state, _ Command) error {
 	return nil
 }
 
-func followHandler(s *state, cmd Command) error {
+func followHandler(s *state, cmd Command, user database.User) error {
 	ctx := context.Background()
 
 	if len(cmd.Arguments) < 1 {
@@ -147,7 +147,7 @@ func followHandler(s *state, cmd Command) error {
 	params := database.CreateFeedFollowParams{
 		CreatedAt: ts,
 		UpdatedAt: ts,
-		UserID:    uuid.NullUUID{UUID: s.currentUser.ID, Valid: true},
+		UserID:    uuid.NullUUID{UUID: user.ID, Valid: true},
 		FeedID:    uuid.NullUUID{UUID: feed.ID, Valid: true},
 	}
 	follow, err := s.db.CreateFeedFollow(ctx, params)
@@ -158,13 +158,13 @@ func followHandler(s *state, cmd Command) error {
 	return nil
 }
 
-func followingHandler(s *state, _ Command) error {
+func followingHandler(s *state, _ Command, user database.User) error {
 	ctx := context.Background()
-	follows, err := s.db.GetFeedFollowsForUser(ctx, s.currentUser.ID)
+	follows, err := s.db.GetFeedFollowsForUser(ctx, user.ID)
 	if err != nil {
 		return err
 	}
-	fmt.Println("Follows for user:", s.currentUser.Name.String)
+	fmt.Println("Follows for user:", user.Name.String)
 	fmt.Println("User has", len(follows), "subscribed feeds")
 	fmt.Println("ID", "|", "feed", "|", "created at")
 	for _, elm := range follows {

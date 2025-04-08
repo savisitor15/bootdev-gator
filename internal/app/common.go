@@ -55,12 +55,9 @@ func initializeState() (state, error) {
 	if err != nil {
 		return state{}, err
 	}
-	ctx := context.Background()
-	user, _ := dbq.GetUserByName(ctx, sql.NullString{String: cfg.CurrentUserName, Valid: true})
 	return state{
-		appConfig:   &cfg,
-		db:          dbq,
-		currentUser: &user,
+		appConfig: &cfg,
+		db:        dbq,
 	}, nil
 }
 
@@ -71,10 +68,10 @@ func initializeCommands() (commands, error) {
 	cmds.register("reset", resetHandler)
 	cmds.register("users", usersHandler)
 	cmds.register("agg", aggHandler)
-	cmds.register("addfeed", addfeedHandler)
+	cmds.register("addfeed", middlewareLoggedIn(addfeedHandler))
 	cmds.register("feeds", feedsHandler)
-	cmds.register("follow", followHandler)
-	cmds.register("following", followingHandler)
+	cmds.register("follow", middlewareLoggedIn(followHandler))
+	cmds.register("following", middlewareLoggedIn(followingHandler))
 	return cmds, nil
 }
 
@@ -91,4 +88,14 @@ func InitializeApp() (state, commands, error) {
 		return state{}, commands{}, fmt.Errorf("unable to initialize command structure: %w", err)
 	}
 	return st, cmds, nil
+}
+
+func middlewareLoggedIn(handler func(s *state, cmd Command, user database.User) error) func(*state, Command) error {
+	return func(s *state, cmd Command) error {
+		user, err := s.db.GetUser(context.Background(), sql.NullString{String: s.appConfig.CurrentUserName, Valid: true})
+		if err != nil {
+			return err
+		}
+		return handler(s, cmd, user)
+	}
 }
