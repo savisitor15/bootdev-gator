@@ -172,3 +172,14 @@ func followingHandler(s *state, _ Command, user database.User) error {
 	}
 	return nil
 }
+
+func unfollowHandler(s *state, cmd Command, user database.User) error {
+	ctx := context.Background()
+	if len(cmd.Arguments) < 1 {
+		return fmt.Errorf("url to unfollow missing")
+	}
+	url := cmd.Arguments[0]
+	err := s.db.DeleteFeedFollowsForUser(ctx,
+		database.DeleteFeedFollowsForUserParams{Name: user.Name, Url: sql.NullString{String: url, Valid: true}})
+	return err
+}

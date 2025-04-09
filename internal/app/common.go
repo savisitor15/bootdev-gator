@@ -72,6 +72,7 @@ func initializeCommands() (commands, error) {
 	cmds.register("feeds", feedsHandler)
 	cmds.register("follow", middlewareLoggedIn(followHandler))
 	cmds.register("following", middlewareLoggedIn(followingHandler))
+	cmds.register("unfollow", middlewareLoggedIn(unfollowHandler))
 	return cmds, nil
 }
 
