@@ -78,12 +78,18 @@ func resetHandler(s *state, _ Command) error {
 	return nil
 }
 
-func aggHandler(s *state, _ Command) error {
+func aggHandlerHelper(s *state) error {
 	var ctx context.Context = context.Background()
-	res, err := fetchFeed(ctx, s.appConfig.FeedUrl)
+	nextFeed, err := s.db.GetNextFeedToFetch(ctx)
 	if err != nil {
 		return err
 	}
+	res, err := fetchFeed(ctx, nextFeed.Url.String)
+	if err != nil {
+		return err
+	}
+	ts := time.Now()
+	s.db.MarkFeedFetched(ctx, database.MarkFeedFetchedParams{ID: nextFeed.ID, UpdatedAt: ts})
 	cleanFeedOutput(res)
 	fmt.Println("channel:", res.Channel.Title)
 	fmt.Println(res.Channel.Description)
@@ -92,8 +98,22 @@ func aggHandler(s *state, _ Command) error {
 		fmt.Println("title:", itm.Title)
 		fmt.Println(itm.Description)
 	}
-
 	return nil
+}
+
+func aggHandler(s *state, cmd Command) error {
+	if len(cmd.Arguments) < 1 {
+		return fmt.Errorf("too few arguments, require interval: 1s, 1m, 1h")
+	}
+	time_between_reqs, err := time.ParseDuration(cmd.Arguments[0])
+	if err != nil {
+		return err
+	}
+	fmt.Println("Collecting feeds every", time_between_reqs)
+	ticker := time.NewTicker(time_between_reqs)
+	for ; ; <-ticker.C {
+		aggHandlerHelper(s)
+	}
 }
 
 func addfeedHandler(s *state, cmd Command, user database.User) error {
