@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -95,8 +96,24 @@ func aggHandlerHelper(s *state) error {
 	fmt.Println(res.Channel.Description)
 	fmt.Println("items:")
 	for _, itm := range res.Channel.Item {
-		fmt.Println("title:", itm.Title)
-		fmt.Println(itm.Description)
+		ts = time.Now()
+		pubt, err := time.Parse(time.RFC1123, itm.PubDate)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		_, err = s.db.CreatePost(ctx, database.CreatePostParams{
+			ID:          uuid.New(),
+			CreatedAt:   ts,
+			Title:       sql.NullString{String: itm.Title, Valid: true},
+			Description: sql.NullString{String: itm.Description, Valid: true},
+			Url:         sql.NullString{String: itm.Link, Valid: true},
+			PublishedAt: sql.NullTime{Time: pubt, Valid: true},
+			FeedID:      uuid.NullUUID{UUID: nextFeed.ID, Valid: true},
+		})
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 	return nil
 }
@@ -110,10 +127,11 @@ func aggHandler(s *state, cmd Command) error {
 		return err
 	}
 	fmt.Println("Collecting feeds every", time_between_reqs)
-	ticker := time.NewTicker(time_between_reqs)
-	for ; ; <-ticker.C {
-		aggHandlerHelper(s)
-	}
+	// ticker := time.NewTicker(time_between_reqs)
+	// for ; ; <-ticker.C {
+	// 	aggHandlerHelper(s)
+	// }
+	return aggHandlerHelper(s)
 }
 
 func addfeedHandler(s *state, cmd Command, user database.User) error {
@@ -202,4 +220,33 @@ func unfollowHandler(s *state, cmd Command, user database.User) error {
 	err := s.db.DeleteFeedFollowsForUser(ctx,
 		database.DeleteFeedFollowsForUserParams{Name: user.Name, Url: sql.NullString{String: url, Valid: true}})
 	return err
+}
+
+func browseHandler(s *state, cmd Command, user database.User) error {
+	var limit int = 0
+	var err error
+	ctx := context.Background()
+	if len(cmd.Arguments) >= 1 {
+		limit, err = strconv.Atoi(cmd.Arguments[0])
+		if err != nil {
+			return err
+		}
+	}else{
+		limit = 2
+	}
+	res, err := s.db.GetPostsForUser(ctx, database.GetPostsForUserParams{
+		UserID: uuid.NullUUID{UUID: user.ID, Valid: true},
+		Limit: int32(limit),
+	})
+	if err != nil{
+		return err
+	}
+	for _, elm := range res{
+		fmt.Println("Published at", elm.PublishedAt.Time)
+		fmt.Println("Title", elm.Title.String)
+		fmt.Println("Link", elm.Url.String)
+		fmt.Println("Description")
+		fmt.Println(elm.Description.String)		
+	}
+	return nil
 }
